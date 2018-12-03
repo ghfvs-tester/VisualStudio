@@ -23,17 +23,14 @@ namespace GitHub.Services
         const string relationship = "GitHubCodeReview";
         readonly IOutliningManagerService outliningService;
         readonly IPeekBroker peekBroker;
-        readonly IUsageTracker usageTracker;
 
         [ImportingConstructor]
         public InlineCommentPeekService(
             IOutliningManagerService outliningManager,
-            IPeekBroker peekBroker,
-            IUsageTracker usageTracker)
+            IPeekBroker peekBroker)
         {
             this.outliningService = outliningManager;
             this.peekBroker = peekBroker;
-            this.usageTracker = usageTracker;
         }
 
         /// <inheritdoc/>
@@ -125,8 +122,6 @@ namespace GitHub.Services
 
             ExpandCollapsedRegions(textView, line.Extent);
             peekBroker.TriggerPeekSession(textView, trackingPoint, relationship);
-
-            usageTracker.IncrementCounter(x => x.NumberOfPRReviewDiffViewInlineCommentOpen).Forget();
 
             return Tuple.Create(line, trackingPoint);
         }

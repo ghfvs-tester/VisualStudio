@@ -27,6 +27,7 @@ namespace GitHub.ViewModels.GitHubPane
     public sealed class PullRequestFilesViewModel : ViewModelBase, IPullRequestFilesViewModel
     {
         readonly IPullRequestService service;
+        readonly IUsageTracker usageTracker;
         readonly BehaviorSubject<bool> isBranchCheckedOut = new BehaviorSubject<bool>(false);
 
         IPullRequestSession pullRequestSession;
@@ -38,12 +39,14 @@ namespace GitHub.ViewModels.GitHubPane
         [ImportingConstructor]
         public PullRequestFilesViewModel(
             IPullRequestService service,
-            IPullRequestEditorService editorService)
+            IPullRequestEditorService editorService,
+            IUsageTracker usageTracker)
         {
             Guard.ArgumentNotNull(service, nameof(service));
             Guard.ArgumentNotNull(editorService, nameof(editorService));
 
             this.service = service;
+            this.usageTracker = usageTracker;
 
             DiffFile = ReactiveCommand.CreateFromTask<IPullRequestFileNode>(x =>
                 editorService.OpenDiff(pullRequestSession, x.RelativePath, "HEAD"));
@@ -63,6 +66,8 @@ namespace GitHub.ViewModels.GitHubPane
                 if (thread != null)
                 {
                     await editorService.OpenDiff(pullRequestSession, file.RelativePath, thread);
+
+                    usageTracker.IncrementCounter(x => x.NumberOfPRReviewDiffViewInlineCommentOpen).Forget();
                 }
             });
 
@@ -84,6 +89,8 @@ namespace GitHub.ViewModels.GitHubPane
             if (annotationModel != null)
             {
                 await editorService.OpenDiff(pullRequestSession, file.RelativePath, annotationModel.HeadSha, annotationModel.EndLine);
+
+                usageTracker.IncrementCounter(x => x.NumberOfPRReviewDiffViewInlineAnnotationOpen).Forget();
             }
         }
 
